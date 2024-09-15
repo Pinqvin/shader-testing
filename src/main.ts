@@ -1,24 +1,111 @@
 import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+import vertexShaderString from './vertex.glsl?raw';
+import fragmentShaderString from './fragment.glsl?raw';
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+type ShaderType = WebGL2RenderingContext["VERTEX_SHADER"] | WebGL2RenderingContext["FRAGMENT_SHADER"]
+
+function createShader(gl: WebGL2RenderingContext, type: ShaderType, source: string) {
+  const shader = gl.createShader(type)!;
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+
+  if (success) {
+    return shader;
+  }
+
+  console.log(gl.getShaderInfoLog(shader));
+  gl.deleteShader(shader);
+}
+
+function createProgram(gl: WebGL2RenderingContext, vertexShader: WebGLShader, fragmentShader: WebGLShader) {
+  const program = gl.createProgram()!;
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
+  var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+
+  if (success) {
+    return program;
+  }
+
+  console.log(gl.getProgramInfoLog(program));
+  gl.deleteProgram(program);
+}
+
+function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): boolean {
+  // Lookup the size the browser is displaying the canvas in CSS pixels.
+  const displayWidth = canvas.clientWidth;
+  const displayHeight = canvas.clientHeight;
+
+  // Check if the canvas is not the same size.
+  const needResize = canvas.width !== displayWidth ||
+    canvas.height !== displayHeight;
+
+  if (needResize) {
+    // Make the canvas the same size
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+  }
+
+  return needResize;
+}
+
+function main() {
+  const canvas = document.querySelector("#app") as HTMLCanvasElement;
+  const gl = canvas.getContext("webgl2");
+
+  if (gl === null) {
+    alert("WebGL2 not available");
+    return;
+  }
+
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderString);
+  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderString);
+
+  if (vertexShader === undefined || fragmentShader === undefined) {
+    console.log("Shader compilation failed");
+    return;
+  }
+
+  const program = createProgram(gl, vertexShader, fragmentShader);
+
+  if (program === undefined) {
+    console.log("Creating program failed");
+    return;
+  }
+
+  const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+  const positionBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+  const positions = [
+    -1, 1,
+    1, 1,
+    1, -1,
+    -1, 1,
+    -1, -1,
+    1, -1
+  ];
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+  const vertexArrayObject = gl.createVertexArray();
+  gl.bindVertexArray(vertexArrayObject);
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+  resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+  // Clear canvas
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  gl.useProgram(program);
+  gl.bindVertexArray(vertexArrayObject);
+
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+main();
