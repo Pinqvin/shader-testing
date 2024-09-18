@@ -79,33 +79,42 @@ function main() {
   const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
   const positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-  const positions = [
-    -1, 1,
-    1, 1,
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1, -1,  // first triangle
     1, -1,
     -1, 1,
-    -1, -1,
-    1, -1
-  ];
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+    -1, 1,  // second triangle
+    1, -1,
+    1, 1,]
+  ), gl.STATIC_DRAW);
+
+  const resUniformLocation = gl.getUniformLocation(program, "res");
+  const timeUniformLocation = gl.getUniformLocation(program, "time");
 
   const vertexArrayObject = gl.createVertexArray();
   gl.bindVertexArray(vertexArrayObject);
   gl.enableVertexAttribArray(positionAttributeLocation);
   gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-  resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement);
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  function render(time: DOMHighResTimeStamp) {
+    time *= 0.001;
 
-  // Clear canvas
-  gl.clearColor(0, 0, 0, 0);
-  gl.clear(gl.COLOR_BUFFER_BIT);
+    resizeCanvasToDisplaySize(gl!.canvas as HTMLCanvasElement);
+    gl!.viewport(0, 0, gl!.canvas.width, gl!.canvas.height);
 
-  gl.useProgram(program);
-  gl.bindVertexArray(vertexArrayObject);
+    // Clear canvas
+    gl!.clearColor(0, 0, 0, 0);
+    gl!.clear(gl!.COLOR_BUFFER_BIT);
 
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl!.useProgram(program!);
+    gl!.bindVertexArray(vertexArrayObject);
+
+    gl!.uniform2f(resUniformLocation, gl!.canvas.width, gl!.canvas.height);
+    gl!.uniform1f(timeUniformLocation, time);
+    gl!.drawArrays(gl!.TRIANGLES, 0, 6);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
 }
 
 main();
