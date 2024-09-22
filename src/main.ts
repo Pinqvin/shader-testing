@@ -54,6 +54,7 @@ function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): boolean {
 
 function main() {
   const canvas = document.querySelector("#app") as HTMLCanvasElement;
+  const button = document.querySelector("#button") as HTMLButtonElement;
   const gl = canvas.getContext("webgl2");
 
   if (gl === null) {
@@ -114,7 +115,15 @@ function main() {
     gl!.drawArrays(gl!.TRIANGLES, 0, 6);
     requestAnimationFrame(render);
   }
-  requestAnimationFrame(render);
+
+  button.addEventListener("click", () => {
+    button.style.display = "none";
+    canvas.style.display = "block";
+    requestAnimationFrame(render);
+  }, { once: true });
+
+  button.disabled = false;
+  button.style.display = "block";
 }
 
 main();
