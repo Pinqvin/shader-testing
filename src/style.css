@@ -11,6 +11,13 @@ canvas {
   height: 100vh;
 }
 
+#text {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  z-index: 1;
+}
+
 #button {
   display: none;
 }

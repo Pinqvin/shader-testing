@@ -97,6 +97,14 @@ function main() {
   gl.enableVertexAttribArray(positionAttributeLocation);
   gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
+  const textCanvas = document.querySelector("#text") as HTMLCanvasElement;
+  const ctx = textCanvas.getContext("2d");
+
+  if (ctx === null) {
+    alert("Couldn't instantiate 2D context for text canvas");
+    return;
+  }
+
   function render(time: DOMHighResTimeStamp) {
     time *= 0.001;
 
@@ -106,6 +114,13 @@ function main() {
     // Clear canvas
     gl!.clearColor(0, 0, 0, 0);
     gl!.clear(gl!.COLOR_BUFFER_BIT);
+
+    // Clear the 2D canvas
+    ctx!.clearRect(0, 0, ctx!.canvas.width, ctx!.canvas.height);
+
+    if (time > 10) {
+      ctx!.fillText("test", 10, 50);
+    }
 
     gl!.useProgram(program!);
     gl!.bindVertexArray(vertexArrayObject);
@@ -119,6 +134,7 @@ function main() {
   button.addEventListener("click", () => {
     button.style.display = "none";
     canvas.style.display = "block";
+    textCanvas.style.display = "block";
     requestAnimationFrame(render);
   }, { once: true });
 
