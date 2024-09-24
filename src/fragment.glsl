@@ -24,7 +24,7 @@ void main() {
   // Shadow
   color *= 1.0f - exp(-6.0f * abs(distance));
   // Waves
-  color *= 0.8f + 0.2f * cos(150.0f * distance - 18.0f * time);
+  color *= 0.8f + 0.2f * cos(150.0f * distance - 10.0f * time);
   // Border
   color = mix(color, vec3(1.0f), 1.0f - smoothstep(0.0f, 0.01f, abs(distance)));
 

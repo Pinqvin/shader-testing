@@ -52,7 +52,7 @@ function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): boolean {
   return needResize;
 }
 
-function main() {
+async function main() {
   const canvas = document.querySelector("#app") as HTMLCanvasElement;
   const button = document.querySelector("#button") as HTMLButtonElement;
   const gl = canvas.getContext("webgl2");
@@ -105,10 +105,21 @@ function main() {
     return;
   }
 
+  const audioContext = new AudioContext({ sampleRate: 48_000 });
+  const volume = audioContext.createGain();
+  await audioContext.audioWorklet.addModule("TechnoProcessor.js");
+  const worklet = new AudioWorkletNode(audioContext, "techno-processor");
+
+  worklet.connect(volume);
+  volume.connect(audioContext.destination);
+
+  const stopTime = 20;
+
   function render(time: DOMHighResTimeStamp) {
     time *= 0.001;
 
     resizeCanvasToDisplaySize(gl!.canvas as HTMLCanvasElement);
+    resizeCanvasToDisplaySize(ctx!.canvas);
     gl!.viewport(0, 0, gl!.canvas.width, gl!.canvas.height);
 
     // Clear canvas
@@ -117,17 +128,31 @@ function main() {
 
     // Clear the 2D canvas
     ctx!.clearRect(0, 0, ctx!.canvas.width, ctx!.canvas.height);
+    ctx!.font = "48px sans-serif";
 
-    if (time > 10) {
-      ctx!.fillText("test", 10, 50);
+    if (time > 3 && time < stopTime) {
+      ctx!.fillText("I wish I knew", 10, ctx!.canvas.height * (1 / 4));
     }
 
-    gl!.useProgram(program!);
-    gl!.bindVertexArray(vertexArrayObject);
+    if (time > 5 && time < stopTime) {
+      ctx!.fillText("how to code", 10, ctx!.canvas.height * (1 / 4) + 40);
+    }
 
-    gl!.uniform2f(resUniformLocation, gl!.canvas.width, gl!.canvas.height);
-    gl!.uniform1f(timeUniformLocation, time);
-    gl!.drawArrays(gl!.TRIANGLES, 0, 6);
+    if (time > 15 && time < stopTime) {
+      ctx!.fillText("That's all folks", ctx!.canvas.width * (3 / 4), ctx!.canvas.height * (1 / 4));
+    }
+
+    if (time > stopTime) {
+      ctx!.fillText("FIN", ctx!.canvas.width * (1 / 2), ctx!.canvas.height * (1 / 2));
+      volume.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+    } else {
+      gl!.useProgram(program!);
+      gl!.bindVertexArray(vertexArrayObject);
+
+      gl!.uniform2f(resUniformLocation, gl!.canvas.width, gl!.canvas.height);
+      gl!.uniform1f(timeUniformLocation, time);
+      gl!.drawArrays(gl!.TRIANGLES, 0, 6);
+    }
     requestAnimationFrame(render);
   }
 
@@ -135,7 +160,10 @@ function main() {
     button.style.display = "none";
     canvas.style.display = "block";
     textCanvas.style.display = "block";
-    requestAnimationFrame(render);
+    document.documentElement.requestFullscreen().then(() => {
+      audioContext.resume();
+      requestAnimationFrame(render);
+    });
   }, { once: true });
 
   button.disabled = false;
