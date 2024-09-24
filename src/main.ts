@@ -24,6 +24,16 @@ class TechnoProcessor extends AudioWorkletProcessor {
             0, 0, 1, 0,
             1, 0, 0, 0
         ];
+
+        this.delayLine = new Float32Array(this.sampleRate).fill(0);
+        this.delayIndex = 0;
+    }
+
+    processDelay(input, feedback, delayTime) {
+        this.delayLine[this.delayIndex] = input + this.delayLine[this.delayIndex] * feedback;
+        this.delayIndex++;
+        this.delayIndex %= Math.trunc(delayTime * this.sampleRate);
+        return this.delayLine[this.delayIndex];
     }
 
     phasor(phase, freq) {
@@ -82,7 +92,7 @@ class TechnoProcessor extends AudioWorkletProcessor {
             channel[i] += bass;
 
             if (this.playChords) {
-                let chordFreq = bassFreq * 4.0;
+                let chordFreq = bassFreq * 5.0;
 
                 if (bar % 4 === 2 || bar % 4 === 3) {
                     chordFreq *= 2.0 / 3.0;
@@ -97,6 +107,7 @@ class TechnoProcessor extends AudioWorkletProcessor {
                 const chordPatternIndex = Math.trunc(sixteenths) % 16;
                 const chordHit = this.chordPattern[chordPatternIndex];
                 chord *= this.envelope(sixteenthFractional, 0.1, 3.0) * chordHit;
+                chord = chord + this.processDelay(chord, 0.5, 0.375) * 0.4;
 
                 channel[i] += chord;
             }
