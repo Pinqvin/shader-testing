@@ -268,8 +268,8 @@ async function main() {
       gl!.uniform2f(resUniformLocation, gl!.canvas.width, gl!.canvas.height);
       gl!.uniform1f(timeUniformLocation, time);
       gl!.drawArrays(gl!.TRIANGLES, 0, 6);
+      requestAnimationFrame(render);
     }
-    requestAnimationFrame(render);
   }
 
   button.addEventListener("click", () => {
